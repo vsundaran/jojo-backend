@@ -50,6 +50,9 @@ class CallController {
       const creatorIdentity = await azureACSService.createUserIdentity();
       const participantIdentity = await azureACSService.createUserIdentity();
 
+      console.log('Creator identity:', creatorIdentity.communicationUserId);
+      console.log('Participant identity:', participantIdentity.communicationUserId);
+
       const creatorToken = await azureACSService.getToken(creatorIdentity.communicationUserId);
       const participantToken = await azureACSService.getToken(participantIdentity.communicationUserId);
 

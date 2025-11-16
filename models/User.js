@@ -21,7 +21,7 @@ const userSchema = new mongoose.Schema({
   },
   languages: [{
     type: String,
-    enum: ['english', 'hindi', 'spanish', 'french', 'german', 'japanese', 'chinese']
+    enum: ['english', 'hindi', 'spanish', 'french', 'german', 'japanese', 'chinese', 'tamil']
   }],
   profileCompleted: {
     type: Boolean,
