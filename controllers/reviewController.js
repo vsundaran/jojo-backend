@@ -1,9 +1,15 @@
 // controllers/reviewController.js
-const Review = require('../models/Review');
-const Call = require('../models/Call');
-const User = require('../models/User');
+const Review = require("../models/Review");
+const Call = require("../models/Call");
+const User = require("../models/User");
 
 class ReviewController {
+  constructor() {
+    this.submitReview = this.submitReview.bind(this);
+    this.updateUserRating = this.updateUserRating.bind(this);
+    this.getUserReviews = this.getUserReviews.bind(this);
+  }
+
   // Submit review after call
   async submitReview(req, res) {
     try {
@@ -11,43 +17,42 @@ class ReviewController {
       const fromUserId = req.user.id;
 
       const call = await Call.findOne({
-        _id: callId,
-        status: 'completed',
-        $or: [{ creator: fromUserId }, { participant: fromUserId }]
+        callId: callId,
+        status: "completed",
+        $or: [{ creator: fromUserId }, { participant: fromUserId }],
       });
 
       if (!call) {
         return res.status(404).json({
           success: false,
-          message: 'Call not found or not completed'
+          message: "Call not found or not completed",
         });
       }
 
       // Determine review type
       const isCreator = call.creator.toString() === fromUserId;
       const toUserId = isCreator ? call.participant : call.creator;
-      const type = isCreator ? 'creator' : 'participant';
-
+      const type = isCreator ? "creator" : "participant";
       // Check if review already exists
       const existingReview = await Review.findOne({
-        call: callId,
-        fromUser: fromUserId
+        call: call._id,
+        fromUser: fromUserId,
       });
 
       if (existingReview) {
         return res.status(400).json({
           success: false,
-          message: 'Review already submitted for this call'
+          message: "Review already submitted for this call",
         });
       }
 
       // Create review
       const review = await Review.create({
-        call: callId,
+        call: call._id,
         fromUser: fromUserId,
         toUser: toUserId,
         rating,
-        type
+        type,
       });
 
       // Update user rating
@@ -55,15 +60,14 @@ class ReviewController {
 
       res.json({
         success: true,
-        message: 'Review submitted successfully',
-        review
+        message: "Review submitted successfully",
+        review,
       });
-
     } catch (error) {
-      console.error('Submit review error:', error);
+      console.error("Submit review error:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -72,16 +76,18 @@ class ReviewController {
   async updateUserRating(userId) {
     try {
       const reviews = await Review.find({ toUser: userId });
-      
+
       if (reviews.length > 0) {
-        const averageRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
-        
+        const averageRating =
+          reviews.reduce((sum, review) => sum + review.rating, 0) /
+          reviews.length;
+
         await User.findByIdAndUpdate(userId, {
-          rating: Math.round(averageRating * 10) / 10 // Round to 1 decimal
+          rating: Math.round(averageRating * 10) / 10, // Round to 1 decimal
         });
       }
     } catch (error) {
-      console.error('Update user rating error:', error);
+      console.error("Update user rating error:", error);
     }
   }
 
@@ -89,26 +95,26 @@ class ReviewController {
   async getUserReviews(req, res) {
     try {
       const userId = req.user.id;
-      const { type = 'received' } = req.query;
+      const { type = "received" } = req.query;
 
-      const filter = type === 'given' ? { fromUser: userId } : { toUser: userId };
+      const filter =
+        type === "given" ? { fromUser: userId } : { toUser: userId };
 
       const reviews = await Review.find(filter)
-        .populate('fromUser', 'name')
-        .populate('toUser', 'name')
-        .populate('call')
+        .populate("fromUser", "name")
+        .populate("toUser", "name")
+        .populate("call")
         .sort({ createdAt: -1 });
 
       res.json({
         success: true,
-        reviews
+        reviews,
       });
-
     } catch (error) {
-      console.error('Get user reviews error:', error);
+      console.error("Get user reviews error:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
