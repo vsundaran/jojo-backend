@@ -29,15 +29,6 @@ const momentSchema = new mongoose.Schema(
     languages: [
       {
         type: String,
-        enum: [
-          "english",
-          "hindi",
-          "spanish",
-          "french",
-          "german",
-          "japanese",
-          "chinese",
-        ],
         required: true,
       },
     ],
@@ -50,9 +41,10 @@ const momentSchema = new mongoose.Schema(
       type: Date,
     },
     activeTime: {
-      type: Number, // in minutes
+      type: Number,
       required: true,
-      enum: [30, 60, 90, 120],
+      enum: [30, 60, 90, 120, 1440],
+      default: 1440,
     },
     expiresAt: {
       type: Date,
