@@ -49,4 +49,7 @@ router.post(
   authController.completeProfile
 );
 
+// Get user languages
+router.get("/languages", auth, authController.getLanguages);
+
 module.exports = router;

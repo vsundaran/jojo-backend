@@ -158,6 +158,32 @@ class AuthController {
       });
     }
   }
+
+  // Get user languages
+  async getLanguages(req, res) {
+    try {
+      const userId = req.user.id;
+      const user = await User.findById(userId);
+
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      res.json({
+        success: true,
+        languages: user.languages || [],
+      });
+    } catch (error) {
+      console.error("Get languages error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  }
 }
 
 module.exports = new AuthController();
