@@ -72,11 +72,14 @@ class MomentController {
   async getUserMoments(req, res) {
     try {
       const userId = req.user.id;
-      const { status } = req.query;
+      const { status, category } = req.query;
 
       const filter = { creator: userId };
       if (status) {
         filter.status = status;
+      }
+      if (category) {
+        filter.category = category;
       }
 
       const moments = await Moment.find(filter)
@@ -236,7 +239,9 @@ class MomentController {
 
       res.json({
         success: true,
-        message: `Moment ${moment.status === "active" ? "activated" : "paused"} successfully`,
+        message: `Moment ${
+          moment.status === "active" ? "activated" : "paused"
+        } successfully`,
         moment,
       });
     } catch (error) {
@@ -251,26 +256,26 @@ class MomentController {
   // Get available moments for Give Joy
   async getAvailableMoments(req, res) {
     try {
-      const { category } = req.query;
+      // const { category } = req.query;
       const userId = req.user.id;
 
-      const filter = {
-        status: "active",
-        isAvailable: true,
-        expiresAt: { $gt: new Date() },
-        creator: { $ne: userId }, // Exclude user's own moments
-      };
+      // const filter = {
+      //   status: "active",
+      //   isAvailable: true,
+      //   expiresAt: { $gt: new Date() },
+      //   creator: { $ne: userId }, // Exclude user's own moments
+      // };
 
-      if (category && category !== "all") {
-        filter.category = category;
-      }
+      // if (category && category !== "all") {
+      //   filter.category = category;
+      // }
 
-      const moments = await Moment.find(filter)
-        .populate("creator", "name languages rating callCount")
-        .select(
-          "category subCategory content languages createdAt hearts callCount"
-        )
-        .sort({ hearts: -1, createdAt: -1 });
+      // const moments = await Moment.find(filter)
+      //   .populate("creator", "name languages rating callCount")
+      //   .select(
+      //     "category subCategory content languages createdAt hearts callCount"
+      //   )
+      //   .sort({ hearts: -1, createdAt: -1 });
 
       // Get category counts
       const categoryCounts = await Moment.aggregate([
@@ -292,7 +297,7 @@ class MomentController {
 
       res.json({
         success: true,
-        moments,
+        // moments,
         categoryCounts,
       });
     } catch (error) {
