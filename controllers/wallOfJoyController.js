@@ -1,6 +1,6 @@
 // controllers/wallOfJoyController.js
-const Moment = require('../models/Moment');
-const Heart = require('../models/Heart');
+const Moment = require("../models/Moment");
+const Heart = require("../models/Heart");
 
 class WallOfJoyController {
   // Get all active moments for Wall of Joy
@@ -8,35 +8,46 @@ class WallOfJoyController {
     try {
       const userId = req.user.id;
       const { page = 1, limit = 20 } = req.query;
+      let { category } = req.query;
+
+      category = category || "all";
 
       const moments = await Moment.find({
-        status: 'active',
+        status: "active",
         isAvailable: true,
-        expiresAt: { $gt: new Date() }
+        creator: { $ne: userId },
+        category: category === "all" ? { $exists: true } : category,
+        expiresAt: { $gt: new Date() },
       })
-      .populate('creator', 'name rating')
-      .select('category subCategory content languages hearts callCount createdAt')
-      .sort({ hearts: -1, createdAt: -1 })
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
+        .populate("creator", "name rating")
+        .select(
+          "category subCategory content languages hearts callCount createdAt"
+        )
+        .sort({ hearts: -1, createdAt: -1 })
+        .limit(limit * 1)
+        .skip((page - 1) * limit);
 
       // Get which moments user has already hearted
       const heartedMoments = await Heart.find({
         user: userId,
-        moment: { $in: moments.map(m => m._id) }
-      }).select('moment');
+        moment: { $in: moments.map((m) => m._id) },
+      }).select("moment");
 
-      const heartedMomentIds = new Set(heartedMoments.map(h => h.moment.toString()));
+      const heartedMomentIds = new Set(
+        heartedMoments.map((h) => h.moment.toString())
+      );
 
-      const momentsWithHearts = moments.map(moment => ({
+      const momentsWithHearts = moments.map((moment) => ({
         ...moment.toObject(),
-        hasHearted: heartedMomentIds.has(moment._id.toString())
+        hasHearted: heartedMomentIds.has(moment._id.toString()),
       }));
 
       const total = await Moment.countDocuments({
-        status: 'active',
+        status: "active",
         isAvailable: true,
-        expiresAt: { $gt: new Date() }
+        expiresAt: { $gt: new Date() },
+        creator: { $ne: userId },
+        category: category === "all" ? { $exists: true } : category,
       });
 
       res.json({
@@ -44,14 +55,13 @@ class WallOfJoyController {
         moments: momentsWithHearts,
         totalPages: Math.ceil(total / limit),
         currentPage: page,
-        total
+        total,
       });
-
     } catch (error) {
-      console.error('Get active moments error:', error);
+      console.error("Get active moments error:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -64,34 +74,34 @@ class WallOfJoyController {
 
       const moment = await Moment.findOne({
         _id: momentId,
-        status: 'active',
-        expiresAt: { $gt: new Date() }
+        status: "active",
+        expiresAt: { $gt: new Date() },
       });
 
       if (!moment) {
         return res.status(404).json({
           success: false,
-          message: 'Moment not found or expired'
+          message: "Moment not found or expired",
         });
       }
 
       // Check if already hearted
       const existingHeart = await Heart.findOne({
         user: userId,
-        moment: momentId
+        moment: momentId,
       });
 
       if (existingHeart) {
         return res.status(400).json({
           success: false,
-          message: 'Already hearted this moment'
+          message: "Already hearted this moment",
         });
       }
 
       // Create heart record
       await Heart.create({
         user: userId,
-        moment: momentId
+        moment: momentId,
       });
 
       // Increment moment hearts count
@@ -100,15 +110,14 @@ class WallOfJoyController {
 
       res.json({
         success: true,
-        message: 'Heart added successfully',
-        hearts: moment.hearts
+        message: "Heart added successfully",
+        hearts: moment.hearts,
       });
-
     } catch (error) {
-      console.error('Add heart error:', error);
+      console.error("Add heart error:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -124,14 +133,14 @@ class WallOfJoyController {
       if (!moment) {
         return res.status(404).json({
           success: false,
-          message: 'Moment not found'
+          message: "Moment not found",
         });
       }
 
       // Remove heart record
       await Heart.findOneAndDelete({
         user: userId,
-        moment: momentId
+        moment: momentId,
       });
 
       // Decrement moment hearts count (but not below 0)
@@ -142,15 +151,14 @@ class WallOfJoyController {
 
       res.json({
         success: true,
-        message: 'Heart removed successfully',
-        hearts: moment.hearts
+        message: "Heart removed successfully",
+        hearts: moment.hearts,
       });
-
     } catch (error) {
-      console.error('Remove heart error:', error);
+      console.error("Remove heart error:", error);
       res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
