@@ -184,6 +184,70 @@ class MomentController {
     }
   }
 
+  // Toggle pause status
+  async togglePause(req, res) {
+    try {
+      const { momentId } = req.params;
+
+      const moment = await Moment.findOne({
+        _id: momentId,
+        creator: req.user.id,
+      });
+
+      if (!moment) {
+        return res.status(404).json({
+          success: false,
+          message: "Moment not found",
+        });
+      }
+
+      // Check if expired
+      if (moment.expiresAt < new Date()) {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify expired moment",
+        });
+      }
+
+      // Check if cancelled
+      if (moment.status === "cancelled") {
+        return res.status(400).json({
+          success: false,
+          message: "Cannot modify cancelled moment",
+        });
+      }
+
+      // Toggle status
+      if (moment.status === "active") {
+        moment.status = "paused";
+        moment.isAvailable = false;
+      } else if (moment.status === "paused") {
+        moment.status = "active";
+        moment.isAvailable = true;
+      } else {
+        // Should not happen given checks above, but for safety
+        return res.status(400).json({
+          success: false,
+          message: `Cannot toggle pause for status: ${moment.status}`,
+        });
+      }
+
+      await moment.save();
+
+      res.json({
+        success: true,
+        message: `Moment ${moment.status === "active" ? "activated" : "paused"} successfully`,
+        moment,
+      });
+    } catch (error) {
+      console.error("Toggle pause error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  }
+
   // Get available moments for Give Joy
   async getAvailableMoments(req, res) {
     try {

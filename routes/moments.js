@@ -44,6 +44,9 @@ router.put("/:momentId", momentController.updateMoment);
 // Delete moment
 router.delete("/:momentId", momentController.deleteMoment);
 
+// Toggle pause status
+router.patch("/:momentId/toggle-pause", momentController.togglePause);
+
 // Get available moments for Give Joy
 router.get("/available", momentController.getAvailableMoments);
 
