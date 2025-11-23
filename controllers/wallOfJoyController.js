@@ -1,6 +1,7 @@
 // controllers/wallOfJoyController.js
 const Moment = require("../models/Moment");
 const Heart = require("../models/Heart");
+const socketService = require("../services/socketService");
 
 class WallOfJoyController {
   // Get all active moments for Wall of Joy
@@ -23,7 +24,7 @@ class WallOfJoyController {
         .select(
           "category subCategory content languages hearts callCount createdAt"
         )
-        .sort({ hearts: -1, createdAt: -1 })
+        .sort({ createdAt: -1 })
         .limit(limit * 1)
         .skip((page - 1) * limit);
 
@@ -108,6 +109,9 @@ class WallOfJoyController {
       moment.hearts += 1;
       await moment.save();
 
+      // Emit real-time update to all connected clients
+      socketService.emitHeartUpdate(momentId, moment.hearts, moment.category);
+
       res.json({
         success: true,
         message: "Heart added successfully",
@@ -148,6 +152,9 @@ class WallOfJoyController {
         moment.hearts -= 1;
         await moment.save();
       }
+
+      // Emit real-time update to all connected clients
+      socketService.emitHeartUpdate(momentId, moment.hearts, moment.category);
 
       res.json({
         success: true,

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JoJo Socket.IO Test Client</title>
+  <script src="https://cdn.socket.io/4.8.1/socket.io.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 30px;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    .status.connected {
+      background: #10b981;
+    }
+
+    .status.disconnected {
+      background: #ef4444;
+    }
+
+    .content {
+      padding: 30px;
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    .section h2 {
+      font-size: 18px;
+      color: #1f2937;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .input-group {
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: #4b5563;
+      margin-bottom: 5px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e5e7eb;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+      font-family: monospace;
+    }
+
+    button {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .log {
+      background: #1f2937;
+      color: #10b981;
+      padding: 20px;
+      border-radius: 8px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      max-height: 400px;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .log-entry {
+      margin-bottom: 8px;
+      padding: 4px 0;
+      border-bottom: 1px solid #374151;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-entry .timestamp {
+      color: #6b7280;
+      margin-right: 10px;
+    }
+
+    .log-entry.error {
+      color: #ef4444;
+    }
+
+    .log-entry.success {
+      color: #10b981;
+    }
+
+    .log-entry.info {
+      color: #3b82f6;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stat-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #667eea;
+      margin-bottom: 5px;
+    }
+
+    .stat-card .label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎉 JoJo Socket.IO Test Client</h1>
+      <div class="status disconnected" id="status">Disconnected</div>
+    </div>
+
+    <div class="content">
+      <!-- Connection Section -->
+      <div class="section">
+        <h2>🔌 Connection</h2>
+        <div class="input-group">
+          <label for="serverUrl">Server URL</label>
+          <input type="text" id="serverUrl" value="http://localhost:3000" placeholder="http://localhost:3000">
+        </div>
+        <div class="input-group">
+          <label for="jwtToken">JWT Token</label>
+          <textarea id="jwtToken" placeholder="Paste your JWT token here..."></textarea>
+        </div>
+        <div class="button-group">
+          <button onclick="connect()" id="connectBtn">Connect</button>
+          <button onclick="disconnect()" id="disconnectBtn" disabled>Disconnect</button>
+        </div>
+      </div>
+
+      <!-- Stats Section -->
+      <div class="section">
+        <h2>📊 Statistics</h2>
+        <div class="stats">
+          <div class="stat-card">
+            <div class="value" id="eventsReceived">0</div>
+            <div class="label">Events Received</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="heartUpdates">0</div>
+            <div class="label">Heart Updates</div>
+          </div>
+          <div class="stat-card">
+            <div class="value" id="uptime">00:00</div>
+            <div class="label">Connected Time</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Actions Section -->
+      <div class="section">
+        <h2>🧪 Test Actions</h2>
+        <div class="input-group">
+          <label for="momentId">Moment ID</label>
+          <input type="text" id="momentId" placeholder="Enter moment ID to test...">
+        </div>
+        <div class="button-group">
+          <button onclick="testHeartAdd()" id="heartAddBtn" disabled>❤️ Add Heart</button>
+          <button onclick="testHeartRemove()" id="heartRemoveBtn" disabled>💔 Remove Heart</button>
+          <button onclick="clearLog()">🗑️ Clear Log</button>
+        </div>
+      </div>
+
+      <!-- Event Log Section -->
+      <div class="section">
+        <h2>📝 Event Log</h2>
+        <div class="log" id="log">
+          <div class="log-entry info">
+            <span class="timestamp">[Ready]</span>
+            <span>Waiting for connection...</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let socket = null;
+    let stats = {
+      eventsReceived: 0,
+      heartUpdates: 0,
+      connectedAt: null,
+      uptimeInterval: null
+    };
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      
+      const timestamp = new Date().toLocaleTimeString();
+      entry.innerHTML = `<span class="timestamp">[${timestamp}]</span><span>${message}</span>`;
+      
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function updateStats() {
+      document.getElementById('eventsReceived').textContent = stats.eventsReceived;
+      document.getElementById('heartUpdates').textContent = stats.heartUpdates;
+    }
+
+    function updateUptime() {
+      if (stats.connectedAt) {
+        const seconds = Math.floor((Date.now() - stats.connectedAt) / 1000);
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        document.getElementById('uptime').textContent = 
+          `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+    }
+
+    function connect() {
+      const serverUrl = document.getElementById('serverUrl').value;
+      const jwtToken = document.getElementById('jwtToken').value.trim();
+
+      if (!jwtToken) {
+        log('❌ Please enter a JWT token', 'error');
+        return;
+      }
+
+      log(`🔄 Connecting to ${serverUrl}...`, 'info');
+
+      socket = io(serverUrl, {
+        auth: { token: jwtToken },
+        transports: ['websocket', 'polling']
+      });
+
+      // Connection events
+      socket.on('connect', () => {
+        log('✅ Connected successfully!', 'success');
+        document.getElementById('status').textContent = 'Connected';
+        document.getElementById('status').className = 'status connected';
+        document.getElementById('connectBtn').disabled = true;
+        document.getElementById('disconnectBtn').disabled = false;
+        document.getElementById('heartAddBtn').disabled = false;
+        document.getElementById('heartRemoveBtn').disabled = false;
+        
+        stats.connectedAt = Date.now();
+        stats.uptimeInterval = setInterval(updateUptime, 1000);
+      });
+
+      socket.on('connection:success', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`📨 Connection confirmed: ${JSON.stringify(data)}`, 'success');
+      });
+
+      socket.on('disconnect', (reason) => {
+        log(`❌ Disconnected: ${reason}`, 'error');
+        document.getElementById('status').textContent = 'Disconnected';
+        document.getElementById('status').className = 'status disconnected';
+        document.getElementById('connectBtn').disabled = false;
+        document.getElementById('disconnectBtn').disabled = true;
+        document.getElementById('heartAddBtn').disabled = true;
+        document.getElementById('heartRemoveBtn').disabled = true;
+        
+        if (stats.uptimeInterval) {
+          clearInterval(stats.uptimeInterval);
+          stats.uptimeInterval = null;
+        }
+      });
+
+      socket.on('connect_error', (error) => {
+        log(`❌ Connection error: ${error.message}`, 'error');
+      });
+
+      // Moment events
+      socket.on('moment:heart:updated', (data) => {
+        stats.eventsReceived++;
+        stats.heartUpdates++;
+        updateStats();
+        log(`❤️ Heart updated: Moment ${data.momentId} → ${data.heartCount} hearts`, 'success');
+      });
+
+      socket.on('moment:created', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`🆕 Moment created: ${data.momentId} (${data.category})`, 'info');
+      });
+
+      socket.on('moment:updated', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`✏️ Moment updated: ${data.momentId}`, 'info');
+      });
+
+      socket.on('moment:deleted', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`🗑️ Moment deleted: ${data.momentId}`, 'info');
+      });
+
+      socket.on('moment:status:changed', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`🔄 Moment status changed: ${data.momentId} → ${data.status}`, 'info');
+      });
+
+      // User events
+      socket.on('user:online', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`👤 User online: ${data.userId}`, 'info');
+      });
+
+      socket.on('user:offline', (data) => {
+        stats.eventsReceived++;
+        updateStats();
+        log(`👤 User offline: ${data.userId}`, 'info');
+      });
+    }
+
+    function disconnect() {
+      if (socket) {
+        socket.disconnect();
+        socket = null;
+        log('🔌 Disconnected manually', 'info');
+      }
+    }
+
+    async function testHeartAdd() {
+      const momentId = document.getElementById('momentId').value.trim();
+      if (!momentId) {
+        log('❌ Please enter a moment ID', 'error');
+        return;
+      }
+
+      const serverUrl = document.getElementById('serverUrl').value;
+      const jwtToken = document.getElementById('jwtToken').value.trim();
+
+      log(`🔄 Adding heart to moment ${momentId}...`, 'info');
+
+      try {
+        const response = await fetch(`${serverUrl}/api/wall-of-joy/moments/${momentId}/heart`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          log(`✅ API Response: ${JSON.stringify(data)}`, 'success');
+        } else {
+          log(`❌ API Error: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Request failed: ${error.message}`, 'error');
+      }
+    }
+
+    async function testHeartRemove() {
+      const momentId = document.getElementById('momentId').value.trim();
+      if (!momentId) {
+        log('❌ Please enter a moment ID', 'error');
+        return;
+      }
+
+      const serverUrl = document.getElementById('serverUrl').value;
+      const jwtToken = document.getElementById('jwtToken').value.trim();
+
+      log(`🔄 Removing heart from moment ${momentId}...`, 'info');
+
+      try {
+        const response = await fetch(`${serverUrl}/api/wall-of-joy/moments/${momentId}/heart`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${jwtToken}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          log(`✅ API Response: ${JSON.stringify(data)}`, 'success');
+        } else {
+          log(`❌ API Error: ${data.message}`, 'error');
+        }
+      } catch (error) {
+        log(`❌ Request failed: ${error.message}`, 'error');
+      }
+    }
+
+    function clearLog() {
+      document.getElementById('log').innerHTML = '';
+      stats.eventsReceived = 0;
+      stats.heartUpdates = 0;
+      updateStats();
+      log('🗑️ Log cleared', 'info');
+    }
+  </script>
+</body>
+</html>

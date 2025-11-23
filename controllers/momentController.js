@@ -3,6 +3,7 @@ const Moment = require("../models/Moment");
 const Call = require("../models/Call");
 const User = require("../models/User");
 const mongoose = require("mongoose");
+const socketService = require("../services/socketService");
 
 class MomentController {
   // Create a new moment
@@ -53,6 +54,9 @@ class MomentController {
 
       // Populate creator details
       await moment.populate("creator", "name languages");
+
+      // Emit real-time event for moment creation
+      socketService.emitMomentCreated(moment);
 
       res.status(201).json({
         success: true,
@@ -131,6 +135,9 @@ class MomentController {
 
       await moment.populate("creator", "name languages");
 
+      // Emit real-time event for moment update
+      socketService.emitMomentUpdated(moment);
+
       res.json({
         success: true,
         message: "Moment updated successfully",
@@ -170,9 +177,13 @@ class MomentController {
         });
       }
 
+      const category = moment.category;
       moment.status = "cancelled";
       moment.isAvailable = false;
       await moment.save();
+
+      // Emit real-time event for moment deletion
+      socketService.emitMomentDeleted(momentId, category);
 
       res.json({
         success: true,
@@ -237,11 +248,17 @@ class MomentController {
 
       await moment.save();
 
+      // Emit real-time event for moment status change
+      socketService.emitMomentStatusChanged(
+        momentId,
+        moment.status,
+        moment.category
+      );
+
       res.json({
         success: true,
-        message: `Moment ${
-          moment.status === "active" ? "activated" : "paused"
-        } successfully`,
+        message: `Moment ${moment.status === "active" ? "activated" : "paused"
+          } successfully`,
         moment,
       });
     } catch (error) {

@@ -214,6 +214,7 @@ const Moment = require("../models/Moment");
 const User = require("../models/User");
 const azureACSService = require("../services/azureACSService");
 const { v4: uuidv4 } = require("uuid");
+const socketService = require("../services/socketService");
 
 class CallController {
   // Initiate a call for Give Joy
@@ -303,6 +304,19 @@ class CallController {
         $inc: { callCount: 1 },
       });
 
+      // Emit real-time event to notify creator of incoming call
+      socketService.emitCallInitiated(
+        availableMoment.creator._id.toString(),
+        call
+      );
+
+      // Emit call status update to both users
+      socketService.emitCallStatusUpdate(
+        call._id.toString(),
+        "connected",
+        [availableMoment.creator._id.toString(), participantId.toString()]
+      );
+
       res.json({
         success: true,
         message: "Call initiated successfully",
@@ -372,6 +386,13 @@ class CallController {
       if (call.azureCallConnectionId) {
         await azureACSService.hangUpCall(call.azureCallConnectionId);
       }
+
+      // Emit real-time event for call completion
+      socketService.emitCallStatusUpdate(
+        call._id.toString(),
+        "completed",
+        [call.creator.toString(), call.participant.toString()]
+      );
 
       res.json({
         success: true,
