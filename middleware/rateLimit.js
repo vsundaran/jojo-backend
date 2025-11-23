@@ -3,8 +3,8 @@ const rateLimit = require("express-rate-limit");
 
 // OTP rate limiter
 const otpLimiter = rateLimit({
-  windowMs: parseInt(process.env.OTP_RATE_LIMIT_WINDOW) || 15 * 60 * 1000, // 15 minutes
-  max: parseInt(process.env.OTP_RATE_LIMIT_MAX) || 50, // limit each IP to 50 OTP requests per windowMs
+  windowMs: parseInt(process.env.OTPRATELIMITWINDOW) || 15 * 60 * 1000, // 15 minutes
+  max: parseInt(process.env.OTPRATELIMITMAX) || 50, // limit each IP to 50 OTP requests per windowMs
   message: {
     success: false,
     message:

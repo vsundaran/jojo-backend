@@ -1,11 +1,11 @@
 // services/twilioService.js
-const twilio = require('twilio');
+const twilio = require("twilio");
 
 class TwilioService {
   constructor() {
     this.client = twilio(
-      process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN
+      process.env.TWILIOACCOUNTSID,
+      process.env.TWILIOAUTHTOKEN
     );
   }
 
@@ -19,13 +19,13 @@ class TwilioService {
     try {
       const message = await this.client.messages.create({
         body: `Your JoJo verification code is: ${otp}. This code will expire in 5 minutes.`,
-        from: process.env.TWILIO_PHONE_NUMBER,
-        to: mobileNumber
+        from: process.env.TWILIOPHONENUMBER,
+        to: mobileNumber,
       });
 
       return { success: true, messageId: message.sid };
     } catch (error) {
-      console.error('Error sending OTP:', error);
+      console.error("Error sending OTP:", error);
       return { success: false, error: error.message };
     }
   }

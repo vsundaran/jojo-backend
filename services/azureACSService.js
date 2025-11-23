@@ -1,4 +1,3 @@
-
 const {
   CommunicationIdentityClient,
 } = require("@azure/communication-identity");
@@ -9,8 +8,8 @@ const {
 class AzureACSService {
   constructor() {
     this.connectionString =
-      process.env.AZURE_COMMUNICATION_SERVICE_CONNECTION_STRING;
-    this.endpoint = process.env.AZURE_COMMUNICATION_SERVICE_ENDPOINT;
+      process.env.AZURECOMMUNICATIONSERVICECONNECTIONSTRING;
+    this.endpoint = process.env.AZURECOMMUNICATIONSERVICEENDPOINT;
     this.identityClient = new CommunicationIdentityClient(
       this.connectionString
     );

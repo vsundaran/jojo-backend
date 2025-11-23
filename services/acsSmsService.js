@@ -4,7 +4,7 @@ const { SmsClient } = require("@azure/communication-sms");
 class ACSSmsService {
   constructor() {
     this.client = new SmsClient(
-      process.env.AZURE_COMMUNICATION_SERVICE_CONNECTION_STRING
+      process.env.AZURECOMMUNICATIONSERVICECONNECTIONSTRING
     );
   }
 
