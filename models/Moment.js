@@ -91,13 +91,13 @@ momentSchema.index({ hearts: -1, createdAt: -1 });
 
 // Pre-save middleware to calculate expiresAt
 momentSchema.pre("save", function (next) {
-  if (this.scheduleType === "immediate") {
-    this.expiresAt = new Date(Date.now() + this.activeTime * 60000);
-  } else if (this.scheduleType === "later" && this.scheduledTime) {
-    this.expiresAt = new Date(
-      this.scheduledTime.getTime() + this.activeTime * 60000
-    );
-  }
+  // if (this.scheduleType === "immediate") {
+  //   this.expiresAt = new Date(Date.now() + this.activeTime * 60000);
+  // } else if (this.scheduleType === "later" && this.scheduledTime) {
+  //   this.expiresAt = new Date(
+  //     this.scheduledTime.getTime() + this.activeTime * 60000
+  //   );
+  // }
   next();
 });
 
