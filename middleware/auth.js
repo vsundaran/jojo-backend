@@ -34,4 +34,35 @@ const auth = async (req, res, next) => {
   }
 };
 
-module.exports = auth;
+// Optional authentication - allows both authenticated and guest access
+const optionalAuth = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+
+    // If no token provided, continue as guest user
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    // If token provided, validate it
+    const decoded = jwt.verify(token, process.env.JWTSECRET);
+    const user = await User.findById(decoded.id);
+
+    if (!user) {
+      // Invalid token - continue as guest
+      req.user = null;
+      return next();
+    }
+
+    req.user = user;
+    next();
+  } catch (error) {
+    // Token validation failed - continue as guest
+    console.error("Optional auth middleware error:", error);
+    req.user = null;
+    next();
+  }
+};
+
+module.exports = { auth, optionalAuth };

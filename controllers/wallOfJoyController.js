@@ -7,19 +7,26 @@ class WallOfJoyController {
   // Get all active moments for Wall of Joy
   async getActiveMoments(req, res) {
     try {
-      const userId = req.user.id;
+      const userId = req.user?.id; // Optional - may be undefined for guest users
       const { page = 1, limit = 20 } = req.query;
       let { category } = req.query;
 
       category = category || "all";
 
-      const moments = await Moment.find({
+      // Build query - for authenticated users, exclude their own moments
+      const query = {
         status: "active",
         isAvailable: true,
-        creator: { $ne: userId },
         category: category === "all" ? { $exists: true } : category,
         expiresAt: { $gt: new Date() },
-      })
+      };
+
+      // Only exclude creator's own moments if user is authenticated
+      if (userId) {
+        query.creator = { $ne: userId };
+      }
+
+      const moments = await Moment.find(query)
         .populate("creator", "name rating")
         .select(
           "category subCategory content languages hearts callCount createdAt"
@@ -28,28 +35,44 @@ class WallOfJoyController {
         .limit(limit * 1)
         .skip((page - 1) * limit);
 
-      // Get which moments user has already hearted
-      const heartedMoments = await Heart.find({
-        user: userId,
-        moment: { $in: moments.map((m) => m._id) },
-      }).select("moment");
+      let momentsWithHearts;
 
-      const heartedMomentIds = new Set(
-        heartedMoments.map((h) => h.moment.toString())
-      );
+      if (userId) {
+        // For authenticated users, get which moments they have hearted
+        const heartedMoments = await Heart.find({
+          user: userId,
+          moment: { $in: moments.map((m) => m._id) },
+        }).select("moment");
 
-      const momentsWithHearts = moments.map((moment) => ({
-        ...moment.toObject(),
-        hasHearted: heartedMomentIds.has(moment._id.toString()),
-      }));
+        const heartedMomentIds = new Set(
+          heartedMoments.map((h) => h.moment.toString())
+        );
 
-      const total = await Moment.countDocuments({
+        momentsWithHearts = moments.map((moment) => ({
+          ...moment.toObject(),
+          hasHearted: heartedMomentIds.has(moment._id.toString()),
+        }));
+      } else {
+        // For guest users, all moments have hasHearted: false
+        momentsWithHearts = moments.map((moment) => ({
+          ...moment.toObject(),
+          hasHearted: false,
+        }));
+      }
+
+      // Count total moments based on same query
+      const countQuery = {
         status: "active",
         isAvailable: true,
         expiresAt: { $gt: new Date() },
-        creator: { $ne: userId },
         category: category === "all" ? { $exists: true } : category,
-      });
+      };
+
+      if (userId) {
+        countQuery.creator = { $ne: userId };
+      }
+
+      const total = await Moment.countDocuments(countQuery);
 
       res.json({
         success: true,
