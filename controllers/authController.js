@@ -129,10 +129,24 @@ class AuthController {
       const { languages } = req.body;
       const userId = req.user.id;
 
+      // Validate that all provided languages exist in the master list
+      const { LANGUAGES } = require("../constants/flags");
+      const validLanguageIds = LANGUAGES.map((l) => l.id);
+      const areAllLanguagesValid = languages.every((langId) =>
+        validLanguageIds.includes(langId)
+      );
+
+      if (!areAllLanguagesValid) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more selected languages are invalid",
+        });
+      }
+
       const user = await User.findByIdAndUpdate(
         userId,
         {
-          languages,
+          languages, // Storing Language IDs
           isVerified: true,
           profileCompleted: true,
         },
@@ -178,6 +192,23 @@ class AuthController {
       });
     } catch (error) {
       console.error("Get languages error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Internal server error",
+      });
+    }
+  }
+
+  // Get all available languages (Master Data)
+  async getAllLanguages(req, res) {
+    try {
+      const { LANGUAGES } = require("../constants/flags");
+      res.json({
+        success: true,
+        languages: LANGUAGES,
+      });
+    } catch (error) {
+      console.error("Get all languages error:", error);
       res.status(500).json({
         success: false,
         message: "Internal server error",

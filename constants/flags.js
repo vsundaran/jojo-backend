@@ -1,6 +1,6 @@
 
 
-export const LANGUAGES = [
+const LANGUAGES = [
     { id: '1', name: 'English', flagCode: 'gb' },
     { id: '2', name: 'हिन्दी (Hindi)', flagCode: 'in' },
     { id: '3', name: 'தமிழ் (Tamil)', flagCode: 'in' },
@@ -207,3 +207,5 @@ export const LANGUAGES = [
     { id: '199', name: 'Tulu', flagCode: 'in' },
     { id: '200', name: 'Kodava', flagCode: 'in' },
 ];
+
+module.exports = { LANGUAGES };

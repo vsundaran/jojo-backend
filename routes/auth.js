@@ -52,4 +52,7 @@ router.post(
 // Get user languages
 router.get("/languages", auth, authController.getLanguages);
 
+// Get all available languages (Master Data)
+router.get("/available-languages", authController.getAllLanguages);
+
 module.exports = router;

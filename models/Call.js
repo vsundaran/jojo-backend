@@ -31,7 +31,7 @@ const callSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    languages: [String],
+    languages: [String], // Stores Language IDs from constants/flags.js
     status: {
       type: String,
       enum: ["initiated", "connected", "completed", "failed", "reported"],

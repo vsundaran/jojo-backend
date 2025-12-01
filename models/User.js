@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     },
     languages: [
       {
-        type: String,
+        type: String, // Stores Language ID from constants/flags.js
       },
     ],
     profileCompleted: {

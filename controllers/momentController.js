@@ -39,12 +39,30 @@ class MomentController {
         );
       }
 
+      // Validate that all provided languages exist in the master list
+      const { LANGUAGES } = require("../constants/flags");
+      const validLanguageIds = LANGUAGES.map((l) => l.id);
+
+      // Ensure languages is an array
+      const languagesArray = Array.isArray(languages) ? languages : [languages];
+
+      const areAllLanguagesValid = languagesArray.every((langId) =>
+        validLanguageIds.includes(langId)
+      );
+
+      if (!areAllLanguagesValid) {
+        return res.status(400).json({
+          success: false,
+          message: "One or more selected languages are invalid",
+        });
+      }
+
       const moment = await Moment.create({
         creator,
         category,
         subCategory,
         content,
-        languages,
+        languages: languagesArray, // Storing Language IDs
         scheduleType,
         scheduledTime: scheduleType === "later" ? scheduledTime : null,
         activeTime,
