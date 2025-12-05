@@ -12,7 +12,8 @@ class AuthController {
 
       // Check if user exists for login or new registration
       const existingUser = await User.findOne({ mobileNumber });
-      const otp = twilioService.generateOTP();
+      // const otp = twilioService.generateOTP();
+      const otp = 123456;
 
       // Save OTP to database
       await OTP.create({
@@ -22,7 +23,7 @@ class AuthController {
       });
 
       // Send OTP via SMS
-      const smsResult = await twilioService.sendOTP(mobileNumber, otp);
+      // const smsResult = await twilioService.sendOTP(mobileNumber, otp);
 
       if (!smsResult.success) {
         return res.status(500).json({
