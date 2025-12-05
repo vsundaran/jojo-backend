@@ -145,9 +145,7 @@ function emitCallInitiated(recipientUserId, callData) {
   if (!io) return;
 
   const payload = {
-    callId: callData._id,
-    momentId: callData.moment,
-    callerId: callData.caller,
+    callData,
     timestamp: Date.now(),
   };
 
