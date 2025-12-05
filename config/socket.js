@@ -144,6 +144,10 @@ function initializeSocket(server) {
       userSocketMap.set(userId, socket.id);
       socketUserMap.set(socket.id, userId);
 
+      // Join user-specific room for direct messaging
+      socket.join(userId);
+      console.log(`🏠 Joined user room: ${userId}`);
+
       // Emit connection success to authenticated user
       socket.emit("connection:success", {
         message: "Connected to JoJo real-time server",
