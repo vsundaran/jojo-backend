@@ -307,7 +307,14 @@ class CallController {
       // Emit real-time event to notify creator of incoming call
       socketService.emitCallInitiated(
         availableMoment.creator._id.toString(),
-        call
+        {
+          id: call._id,
+          callId: call.callId,
+          moment: availableMoment,
+          creatorToken: creatorToken.token,
+          participantToken: participantToken.token,
+          azureCallConnectionId: callConnection.callConnection.callConnectionId,
+        }
       );
 
       // Emit call status update to both users
