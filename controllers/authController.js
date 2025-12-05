@@ -25,12 +25,12 @@ class AuthController {
       // Send OTP via SMS
       // const smsResult = await twilioService.sendOTP(mobileNumber, otp);
 
-      if (!smsResult.success) {
-        return res.status(500).json({
-          success: false,
-          message: "Failed to send OTP",
-        });
-      }
+      // if (!smsResult.success) {
+      //   return res.status(500).json({
+      //     success: false,
+      //     message: "Failed to send OTP",
+      //   });
+      // }
 
       res.json({
         success: true,
