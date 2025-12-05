@@ -2,7 +2,7 @@ const axios = require("axios");
 
 class Fast2SmsService {
     constructor() {
-        this.apiKey = process.env.FAST2SMS_API_KEY;
+        this.apiKey = 'Q4oaLdeG710b5NAS2p8CMKxEi3qVgI96tlrcJyuzYXBZTPjWUmRg1uGXSiw206qQodyOWma8TLH7kJA5';
         this.baseUrl = "https://www.fast2sms.com/dev/bulkV2";
     }
 
@@ -21,7 +21,8 @@ class Fast2SmsService {
             const response = await axios.post(
                 this.baseUrl,
                 {
-                    route: "q",
+                    route: "otp",
+                    variables_values: otp,
                     message: `Your JoJo verification code is: ${otp}. This code will expire in 5 minutes.`,
                     language: "english",
                     flash: 0,
@@ -29,11 +30,13 @@ class Fast2SmsService {
                 },
                 {
                     headers: {
-                        authorization: "NLSVmRQUZFJAx4vWoDnKekdgB1j3MXpOH28uhrbzw7GCI059Yf7PFGnZCBpzmKOoSy6Yvdikg1EHA3hX",
+                        authorization: this.apiKey,
                         "Content-Type": "application/json",
                     },
                 }
             );
+
+            console.log(response, "otp response")
 
             return { success: true, data: response.data };
         } catch (error) {
