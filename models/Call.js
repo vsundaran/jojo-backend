@@ -37,11 +37,7 @@ const callSchema = new mongoose.Schema(
       enum: ["initiated", "connected", "completed", "failed", "reported"],
       default: "initiated",
     },
-    creatorAcsId: {
-      type: String,
-      required: false,
-    },
-    participantAcsId: {
+    agoraChannel: {
       type: String,
       required: false,
     },

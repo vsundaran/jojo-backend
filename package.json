@@ -9,9 +9,7 @@
     "test": "jest"
   },
   "dependencies": {
-    "@azure/communication-call-automation": "^1.5.0",
-    "@azure/communication-identity": "^1.3.1",
-    "@azure/communication-sms": "^1.2.0-beta.4",
+    "agora-token": "^2.0.5",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
