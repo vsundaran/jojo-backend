@@ -212,9 +212,9 @@
 const Call = require("../models/Call");
 const Moment = require("../models/Moment");
 const User = require("../models/User");
-const azureACSService = require("../services/azureACSService");
 const { v4: uuidv4 } = require("uuid");
 const socketService = require("../services/socketService");
+const agoraService = require("../services/agoraService");
 
 class CallController {
   // Initiate a call for Give Joy
@@ -257,6 +257,8 @@ class CallController {
         subCategory: availableMoment.subCategory,
         languages: availableMoment.languages,
         status: "initiated",
+        agoraChannel: uuidv4(), // Use callId as Agora channel name
+        startTime: new Date(),
       });
 
       // Update moment with current call
@@ -264,32 +266,7 @@ class CallController {
       availableMoment.isAvailable = false;
       await availableMoment.save();
 
-      const creatorIdentity = await azureACSService.createUserIdentity();
-
-
-      const participantIdentity = await azureACSService.createUserIdentity();
-
-      const creatorToken = await azureACSService.getToken(
-        creatorIdentity.communicationUserId
-      );
-
-      const participantToken = await azureACSService.getToken(
-        participantIdentity.communicationUserId
-      );
-
-      const callConnection = await azureACSService.createCall(
-        creatorIdentity.communicationUserId,
-        participantIdentity.communicationUserId,
-        availableMoment._id
-      );
-
-
-      // Update call with Azure details
-      call.azureCallConnectionId =
-        callConnection.callConnection.callConnectionId;
-      call.creatorAcsId = creatorIdentity.communicationUserId;
-      call.participantAcsId = participantIdentity.communicationUserId;
-      call.startTime = new Date();
+      // Update call status to connected
       call.status = "connected";
       await call.save();
 
@@ -311,9 +288,7 @@ class CallController {
           id: call._id,
           callId: call.callId,
           moment: availableMoment,
-          creatorToken: creatorToken.token,
-          participantToken: participantToken.token,
-          azureCallConnectionId: callConnection.callConnection.callConnectionId,
+          agoraChannel: call.agoraChannel,
         }
       );
 
@@ -331,9 +306,7 @@ class CallController {
           id: call._id,
           callId: call.callId,
           moment: availableMoment,
-          creatorToken: creatorToken.token,
-          participantToken: participantToken.token,
-          azureCallConnectionId: callConnection.callConnection.callConnectionId,
+          agoraChannel: call.agoraChannel,
         },
       });
     } catch (error) {
@@ -387,11 +360,6 @@ class CallController {
         call.moment.currentCall = null;
         call.moment.isAvailable = call.moment.expiresAt > new Date();
         await call.moment.save();
-      }
-
-      // Hang up call in Azure ACS
-      if (call.azureCallConnectionId) {
-        await azureACSService.hangUpCall(call.azureCallConnectionId);
       }
 
       // Emit real-time event for call completion
@@ -453,6 +421,55 @@ class CallController {
       res.status(500).json({
         success: false,
         message: "Internal server error",
+      });
+    }
+  }
+
+  // Get Agora token for video call
+  async getAgoraToken(req, res) {
+    try {
+      const { channelName, uid } = req.query;
+      const userId = req.user.id;
+
+      if (!channelName) {
+        return res.status(400).json({
+          success: false,
+          message: "Channel name is required",
+        });
+      }
+
+      // Validate that the user is part of this call
+      // channelName should be the agoraChannel from the call
+      const call = await Call.findOne({
+        agoraChannel: channelName,
+        $or: [{ creator: userId }, { participant: userId }],
+      });
+
+      if (!call) {
+        return res.status(403).json({
+          success: false,
+          message: "Unauthorized access to this channel",
+        });
+      }
+
+      // Generate token with user ID as UID (or 0 for auto-assignment)
+      const uidNumber = uid ? parseInt(uid, 10) : 0;
+      const tokenData = agoraService.generateRtcToken(
+        channelName,
+        uidNumber,
+        "publisher"
+      );
+
+      res.json({
+        success: true,
+        ...tokenData,
+      });
+    } catch (error) {
+      console.error("Get Agora token error:", error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to generate token",
+        error: error.message,
       });
     }
   }

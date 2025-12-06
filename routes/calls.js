@@ -25,6 +25,9 @@ router.post(
 // End call
 router.post('/:callId/end', callController.endCall);
 
+// Get Agora token for video call
+router.get('/agora-token', callController.getAgoraToken);
+
 // Get call history
 router.get('/history', callController.getCallHistory);
 
